@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+option go_package = "gen/api";
+
+package api;
+
+service API {
+    rpc SayHello(Word) returns (Word) {}
+}
+
+message Word {
+    string word = 1;
+}
