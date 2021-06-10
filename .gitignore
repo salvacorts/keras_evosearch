@@ -1,2 +1,3 @@
-**/gen
+client/protobuf
+server/protobuf
 **/bin

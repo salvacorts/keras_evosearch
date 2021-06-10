@@ -1,13 +1,36 @@
 syntax = "proto3";
 
-option go_package = "gen/api";
+option go_package = "protobuf/api";
 
 package api;
 
 service API {
-    rpc SayHello(Word) returns (Word) {}
+    rpc GetModelParams(Empty) returns (ModelParameters) {}
+    rpc ReturnModel(ModelResults) returns (Empty) {}
 }
 
-message Word {
-    string word = 1;
+message Empty {}
+
+enum Optimizers {
+    Adam = 0;
+    SGD = 1;
+    Xprop = 2;
+}
+
+message Layer {
+    int32 num_neurons = 1;
+}
+
+message ModelParameters {
+    uint64 model_id = 1;
+
+    float learning_rate = 2;
+    Optimizers optimizer = 3;
+    string activation_func = 4;
+    repeated Layer layers = 5;
+}
+
+message ModelResults {
+    uint64 model_id = 1;
+    float recall = 2;
 }

@@ -6,18 +6,43 @@ import (
 	"log"
 	"net"
 
-	pb "server/gen/api"
+	pb "server/protobuf/api"
 
 	grpc "google.golang.org/grpc"
 )
 
 type ApiServer struct {
 	pb.UnimplementedAPIServer
+
+	ModelId uint64
 }
 
-func (ApiServer) SayHello(ctx context.Context, in *pb.Word) (*pb.Word, error) {
-	out := fmt.Sprintf("%s 1234", in.Word)
-	return &pb.Word{Word: out}, nil
+func (s *ApiServer) GetModelParams(ctx context.Context, in *pb.Empty) (*pb.ModelParameters, error) {
+	fmt.Println("Sending new model")
+
+	return &pb.ModelParameters{
+		ModelId: s.ModelId,
+
+		LearningRate:   0.01,
+		Optimizer:      pb.Optimizers_Adam,
+		ActivationFunc: "relu",
+
+		Layers: []*pb.Layer{
+			{
+				NumNeurons: 32,
+			},
+			{
+				NumNeurons: 32,
+			},
+		},
+	}, nil
+}
+
+func (s *ApiServer) ReturnModel(ctx context.Context, results *pb.ModelResults) (*pb.Empty, error) {
+	fmt.Printf("Model (%d) returned. Recall: %f\n", results.ModelId, results.Recall)
+
+	s.ModelId += 1
+	return &pb.Empty{}, nil
 }
 
 func main() {
@@ -28,6 +53,6 @@ func main() {
 
 	var opts []grpc.ServerOption
 	grpcServer := grpc.NewServer(opts...)
-	pb.RegisterAPIServer(grpcServer, ApiServer{})
+	pb.RegisterAPIServer(grpcServer, &ApiServer{})
 	grpcServer.Serve(lis)
 }

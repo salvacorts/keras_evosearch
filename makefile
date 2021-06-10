@@ -5,7 +5,8 @@ install_py_deps:
 	python -m pip install -r client/requirements.txt
 
 install_go_deps:
-	echo TODO
+	go get -u github.com/golang/protobuf/{proto,protoc-gen-go}
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
 proto_go:
 	protoc \
@@ -14,11 +15,10 @@ proto_go:
 		protobuf/api.proto
 
 proto_py:
-	mkdir -p client/gen
 	python -m grpc_tools.protoc \
-			 -Iprotobuf \
-			 --python_out=client/gen \
-			 --grpc_python_out=client/gen \
+			-I. \
+			--python_out=client \
+			--grpc_python_out=client \
 			 protobuf/api.proto
 
 proto: proto_go proto_py
@@ -29,7 +29,6 @@ build_server: proto_go
 		go build -o bin/main main.go
 
 build_client: proto_py
-	echo TODO
 
 build: build_server build_client
 
@@ -40,3 +39,6 @@ clean:
 
 run_server:
 	server/bin/main
+
+run_client:
+	python client/main.py
