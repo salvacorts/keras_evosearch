@@ -12,7 +12,7 @@ with grpc.insecure_channel("localhost:10000") as channel:
 
         results = ModelResults()
         results.model_id = params.model_id
-        results.recall = 1.0
+        results.recall = 0.8
         _ = stub.ReturnModel(results)
 
         time.sleep(2)
