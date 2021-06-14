@@ -11,10 +11,17 @@ service API {
 
 message Empty {}
 
-enum Optimizers {
+enum Optimizer {
     Adam = 0;
     SGD = 1;
-    Xprop = 2;
+    RMSprop = 2;
+}
+
+enum ActivationFunc {
+    Relu = 0;
+    Sigmoid = 1;
+    Softmax = 2;
+    Tanh = 3;
 }
 
 message Layer {
@@ -22,15 +29,17 @@ message Layer {
 }
 
 message ModelParameters {
-    uint64 model_id = 1;
+    string model_id = 1;
 
     float learning_rate = 2;
-    Optimizers optimizer = 3;
-    string activation_func = 4;
+    Optimizer optimizer = 3;
+    ActivationFunc activation_func = 4;
     repeated Layer layers = 5;
+    bool dropout = 6;
 }
 
 message ModelResults {
-    uint64 model_id = 1;
+    string model_id = 1;
+
     float recall = 2;
 }

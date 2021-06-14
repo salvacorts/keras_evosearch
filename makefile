@@ -25,6 +25,7 @@ proto: proto_go proto_py
 
 build_server: proto_go
 	cd server; \
+		go mod tidy; \
 		mkdir -p bin; \
 		go build -o bin/main main.go
 
