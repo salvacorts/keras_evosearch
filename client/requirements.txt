@@ -1,5 +1,4 @@
 grpcio
 grpcio-tools
 tensorflow
-keras
 pandas
