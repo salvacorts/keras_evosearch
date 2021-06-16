@@ -59,7 +59,7 @@ if __name__ == "__main__":
 
         df = pd.read_csv('https://raw.githubusercontent.com/jeffheaton/proben1/master/cancer/breast-cancer-wisconsin.data', header=None)
         df.drop(columns=[0], inplace=True)
-        df.replace('?', np.nan, inplace=True) # TODO: Why?
+        df.replace('?', np.nan, inplace=True) # TODO: Why? - Porque '?' no es un número y da errores 
         df[9] = df[9].map(lambda x: 1 if x == 4 else 0)
 
         X = np.array(df.drop([9], axis=1))
@@ -71,8 +71,8 @@ if __name__ == "__main__":
         labelencoder_Y = LabelEncoder()
         y = labelencoder_Y.fit_transform(y)
 
-        # TODO: - Set seed
-        #       - Divide train, validation and test
+        # TODO: - Set seed - Hecho
+        #       - Divide train, validation and test - Hecho
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2,random_state=0)
         X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.25, random_state=0) 
       
