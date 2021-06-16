@@ -1,5 +1,5 @@
 # docker build -f client/Dockerfile -t kerasevo/client .
-FROM python:latest
+FROM tensorflow/tensorflow:latest-gpu
 
 COPY client /var/client
 
