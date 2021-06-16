@@ -48,8 +48,6 @@ def CreateModel(params: ModelParameters) -> Sequential:
                   loss=tf.keras.losses.binary_crossentropy,
                   metrics=[tf.keras.metrics.Recall()])
 
-    #model.summary()
-
     return model
 
 if __name__ == "__main__":
@@ -61,7 +59,7 @@ if __name__ == "__main__":
 
         df = pd.read_csv('https://raw.githubusercontent.com/jeffheaton/proben1/master/cancer/breast-cancer-wisconsin.data', header=None)
         df.drop(columns=[0], inplace=True)
-        df.replace('?', -99999, inplace=True) # TODO: Why?
+        df.replace('?', np.nan, inplace=True) # TODO: Why?
         df[9] = df[9].map(lambda x: 1 if x == 4 else 0)
 
         X = np.array(df.drop([9], axis=1))
@@ -75,8 +73,9 @@ if __name__ == "__main__":
 
         # TODO: - Set seed
         #       - Divide train, validation and test
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
-
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2,random_state=0)
+        X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.25, random_state=0) 
+      
         while True:
             try:
                 params = stub.GetModelParams(Empty())
@@ -89,7 +88,7 @@ if __name__ == "__main__":
                           batch_size=32,
                           epochs=50,
                           verbose=1,
-                          validation_data=(X_test, y_test))
+                          validation_data=(X_val, y_val)) 
             
                 loss, recall = model.evaluate(X_test, y_test,
                                             verbose=1,
