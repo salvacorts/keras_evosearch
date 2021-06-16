@@ -2,7 +2,7 @@ import time
 import grpc
 
 import tensorflow as tf
-import keras
+from tensorflow import keras
 from keras.models import Sequential
 from keras.layers import Dense, Dropout
 from keras.metrics import Recall
