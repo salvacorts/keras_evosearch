@@ -112,11 +112,11 @@ func (m *ModelGenome) Crossover(Y eaopt.Genome, rng *rand.Rand) {
 
 		if len(other.Layers) > len(m.Layers) {
 			if len(m.Layers) > 1 {
-				eaopt.CrossPMX(Layers(m.Layers), Layers(other.Layers), rng)
+				eaopt.CrossGNX(Layers(m.Layers), Layers(other.Layers), 1, rng)
 			}
 		} else {
 			if len(other.Layers) > 1 {
-				eaopt.CrossPMX(Layers(other.Layers), Layers(m.Layers), rng)
+				eaopt.CrossGNX(Layers(other.Layers), Layers(m.Layers), 1, rng)
 			}
 		}
 	}

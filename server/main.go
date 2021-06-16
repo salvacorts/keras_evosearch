@@ -37,16 +37,7 @@ func (s *ApiServer) GetModelParams(ctx context.Context, in *pb.Empty) (*pb.Model
 		return model, nil
 	}
 
-	// log.Errorf("No models to evaluate, Models_chan_to_evaluate size=%d",
-	// 	len(ea.Models_chan_to_evaluate))
-
-	// for id, c := range ea.Models_chan_to_evaluate {
-	// 	fmt.Printf("Chan evaluate (%s) - len=%d cap=%d\n", id, len(c), cap(c))
-	// }
-	// for id, c := range ea.Models_chan_evaluated {
-	// 	fmt.Printf("Chan evaluated (%s) - len=%d cap=%d\n", id, len(c), cap(c))
-	// }
-
+	log.Warn("No models to evaluate")
 	return nil, status.Errorf(codes.Canceled, "No models to evaluate")
 }
 
@@ -87,7 +78,7 @@ func main() {
 	// Configure the GA
 	ga.NGenerations = 30
 	ga.PopSize = 50
-	ga.ParallelEval = true
+	ga.ParallelEval = true // true
 	ga.Model = eaopt.ModGenerational{
 		Selector: eaopt.SelTournament{
 			NContestants: 2,
@@ -108,6 +99,11 @@ func main() {
 	}
 
 	// Start the GA
-	best := ga.Minimize(ea.MakeModel)
-	log.Info("Best model found:\n%x", best)
+	err = ga.Minimize(ea.MakeModel)
+	if err != nil {
+		log.Panicf("GA failed. %e", err)
+	}
+
+	best := ga.HallOfFame[0].Genome.(*ea.ModelGenome)
+	log.Infof("Best model found: %s", best.String())
 }

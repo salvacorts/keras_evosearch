@@ -1,3 +1,4 @@
+from os import extsep
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout
@@ -11,9 +12,9 @@ import numpy as np
 
 import argparse
 import time
-import grpc
 
-from protobuf.api_pb2 import ModelParameters, ModelResults, Empty
+import grpc
+from protobuf.api_pb2 import ModelParameters, ModelResults, Empty, Optimizer, ActivationFunc
 from protobuf.api_pb2_grpc import APIStub
 
 def ParseArgs() -> argparse.Namespace:
@@ -27,24 +28,30 @@ def ParseArgs() -> argparse.Namespace:
 
 def CreateModel(params: ModelParameters) -> Sequential:
     model = Sequential()
+
+    activation_func = ActivationFunc.Name(params.activation_func).lower()
+    optimizers = {
+        Optimizer.Adam: tf.keras.optimizers.Adam,
+        Optimizer.SGD: tf.keras.optimizers.SGD,
+        Optimizer.RMSprop: tf.keras.optimizers.RMSprop
+    }
     
-    # TODO: map activation func to actual activation func
     for i, layer in enumerate(params.layers):
         if i == 0:
             model.add(Dense(units=layer.num_neurons,
-                            activation=params.activation_func,
+                            activation=activation_func,
                             input_shape=(9,)))
         else:
             model.add(Dense(units=layer.num_neurons,
-                            activation=params.activation_func))
+                            activation=activation_func))
 
         if params.dropout:
             model.add(Dropout(0.25))
     
     model.add(Dense(1, activation="sigmoid"))
 
-    # TODO: Map optimizer to actual optimizer
-    model.compile(optimizer=params.optimizer(params.learning_rate),
+    optimizer = optimizers[params.optimizer]
+    model.compile(optimizer=optimizer(params.learning_rate),
                   loss=tf.keras.losses.binary_crossentropy,
                   metrics=[tf.keras.metrics.Recall()])
 
@@ -55,27 +62,27 @@ def CreateModel(params: ModelParameters) -> Sequential:
 if __name__ == "__main__":
     args = ParseArgs()
 
+    df = pd.read_csv('https://raw.githubusercontent.com/jeffheaton/proben1/master/cancer/breast-cancer-wisconsin.data', header=None)
+    df.drop(columns=[0], inplace=True)
+    df.replace('?', -99999, inplace=True) # TODO: Why?
+    df[9] = df[9].map(lambda x: 1 if x == 4 else 0)
+
+    X = np.array(df.drop([9], axis=1))
+    y = np.array(df[9])
+
+    # TODO: Set seed?
+    scaler = preprocessing.MinMaxScaler()
+    X = scaler.fit_transform(X)
+    labelencoder_Y = LabelEncoder()
+    y = labelencoder_Y.fit_transform(y)
+
+    # TODO: - Set seed
+    #       - Divide train, validation and test
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+
     print(f"Connecting to {args.server}")
     with grpc.insecure_channel(args.server) as channel:
         stub = APIStub(channel)
-
-        df = pd.read_csv('https://raw.githubusercontent.com/jeffheaton/proben1/master/cancer/breast-cancer-wisconsin.data', header=None)
-        df.drop(columns=[0], inplace=True)
-        df.replace('?', -99999, inplace=True) # TODO: Why?
-        df[9] = df[9].map(lambda x: 1 if x == 4 else 0)
-
-        X = np.array(df.drop([9], axis=1))
-        y = np.array(df[9])
-
-        # TODO: Set seed?
-        scaler = preprocessing.MinMaxScaler()
-        X = scaler.fit_transform(X)
-        labelencoder_Y = LabelEncoder()
-        y = labelencoder_Y.fit_transform(y)
-
-        # TODO: - Set seed
-        #       - Divide train, validation and test
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
         while True:
             try:
@@ -87,42 +94,28 @@ if __name__ == "__main__":
                 # Train model
                 model.fit(X_train, y_train,
                           batch_size=32,
-                          epochs=50,
+                          epochs=10,
                           verbose=1,
                           validation_data=(X_test, y_test))
             
                 loss, recall = model.evaluate(X_test, y_test,
-                                            verbose=1,
-                                            batch_size=32)
+                                              verbose=0,
+                                              batch_size=32)
 
                 results = ModelResults()
                 results.model_id = params.model_id
                 results.recall = recall
+
+                print(f"Returning params")
                 _ = stub.ReturnModel(results)
-            except:
-                time.sleep(5)
-
-
-if __name__ == "__main__":
-    args = ParseArgs()
-
-    print(f"Connecting to {args.server}")
-    with grpc.insecure_channel(args.server) as channel:
-        stub = APIStub(channel)
-
-        while True:
-            try:
-                params = stub.GetModelParams(Empty())
-                print(params)
-
-                results = ModelResults()
-                results.model_id = params.model_id
-                results.recall = 0.8
-                _ = stub.ReturnModel(results)
-
-                time.sleep(2)
-            except Exception as e:
-                #print(e)
-                time.sleep(5)
-
-            
+            except grpc.RpcError as rpc_error:
+                if rpc_error.code() == grpc.StatusCode.CANCELLED:
+                    print("No models to evaluate now. Sleeping...")
+                    time.sleep(0.5)
+                elif rpc_error.code() == grpc.StatusCode.UNAVAILABLE:
+                    print("Server is down")
+                    exit(0)
+                else:
+                    print(rpc_error)
+                    exit(1)
+                           
