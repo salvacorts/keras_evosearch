@@ -17,9 +17,6 @@ from protobuf.api_pb2_grpc import APIStub
 with grpc.insecure_channel("localhost:10000") as channel:
     stub = APIStub(channel)
 
-
-    """## Creating and shaping the data"""
-
     df = pd.read_csv('https://raw.githubusercontent.com/jeffheaton/proben1/master/cancer/breast-cancer-wisconsin.data',header=None)
     df.drop(columns=[0], inplace=True)
     df.replace('?', -99999, inplace=True)
