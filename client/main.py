@@ -61,7 +61,7 @@ if __name__ == "__main__":
 
     df = pd.read_csv('https://raw.githubusercontent.com/jeffheaton/proben1/master/cancer/breast-cancer-wisconsin.data', header=None)
     df.drop(columns=[0], inplace=True)
-    df.replace('?', np.nan, inplace=True)
+    df.replace('?', -99999, inplace=True)
     df[9] = df[9].map(lambda x: 1 if x == 4 else 0)
 
     X = np.array(df.drop([9], axis=1))
