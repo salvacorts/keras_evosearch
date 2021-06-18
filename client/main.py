@@ -1,4 +1,6 @@
 import tensorflow as tf
+import tensorflow_addons as tfa
+
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout
 
@@ -52,7 +54,7 @@ def CreateModel(params: ModelParameters) -> Sequential:
     optimizer = optimizers[params.optimizer]
     model.compile(optimizer=optimizer(params.learning_rate),
                   loss=tf.keras.losses.binary_crossentropy,
-                  metrics=[tf.keras.metrics.Recall()])
+                  metrics=[tfa.metrics.F1Score(num_classes=1)])
 
     return model
 
