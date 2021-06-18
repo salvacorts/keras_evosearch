@@ -96,13 +96,13 @@ if __name__ == "__main__":
                           verbose=1,
                           validation_data=(X_val, y_val)) 
             
-                loss, recall = model.evaluate(X_test, y_test,
+                loss, f1_score = model.evaluate(X_test, y_test,
                                               verbose=0,
                                               batch_size=32)
 
                 results = ModelResults()
                 results.model_id = params.model_id
-                results.recall = recall
+                results.recall = f1_score[0]
 
                 print(f"Returning params")
                 _ = stub.ReturnModel(results)
