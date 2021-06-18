@@ -62,13 +62,14 @@ def CreateModel(params: ModelParameters) -> Sequential:
 if __name__ == "__main__":
     args = ParseArgs()
 
-    df = pd.read_csv('https://archive.ics.uci.edu/ml/machine-learning-databases/00547/Algerian_forest_fires_dataset_UPDATE.csv',skiprows=[0,124,125,126])
-    df.columns=df.columns.map(lambda x:x.strip())
-    df.drop(columns=['day'], inplace=True)
-    df.dropna(inplace=True)    
-    df['Classes'] = df['Classes'].map(lambda x: 1 if x == 'fire' else 0)
-    X = np.array(df.drop(['Classes'], axis=1))
-    y = np.array(df['Classes'])
+    df = pd.read_csv("https://archive.ics.uci.edu/ml/machine-learning-databases/00547/Algerian_forest_fires_dataset_UPDATE.csv",
+                     skiprows=[0,124,125,126])
+    df.columns=df.columns.map(lambda x: x.strip())
+    df.drop(columns=["day", "year"], inplace=True)
+    df.dropna(inplace=True)
+    df["Classes"] = df["Classes"].map(lambda x: 1 if x.strip() == "fire" else 0)
+    X = np.array(df.drop(["Classes"], axis=1))
+    y = np.array(df["Classes"])
 
     scaler = preprocessing.MinMaxScaler()
     X = scaler.fit_transform(X)
