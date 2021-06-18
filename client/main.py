@@ -4,6 +4,7 @@ import tensorflow_addons as tfa
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout
 
+from sklearn import metrics
 from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
@@ -54,7 +55,7 @@ def CreateModel(params: ModelParameters) -> Sequential:
     optimizer = optimizers[params.optimizer]
     model.compile(optimizer=optimizer(params.learning_rate),
                   loss=tf.keras.losses.binary_crossentropy,
-                  metrics=[tfa.metrics.F1Score(num_classes=1)])
+                  metrics=["accuracy"])
 
     return model
 
@@ -64,19 +65,16 @@ if __name__ == "__main__":
     df = pd.read_csv('https://raw.githubusercontent.com/jeffheaton/proben1/master/cancer/breast-cancer-wisconsin.data', header=None)
     df.drop(columns=[0], inplace=True)
     df.replace('?', np.nan, inplace=True)
-    df.dropna(inplace=True)    
-    df[9] = df[9].map(lambda x: 1 if x == 4 else 0)
+    df.dropna(inplace=True)
+    df[10] = df[10].map(lambda x: 1 if x == 4 else 0)
 
-    X = np.array(df.drop([9], axis=1))
-    y = np.array(df[9])
+    X = np.array(df.drop([10], axis=1))
+    y = np.array(df[10])
 
     scaler = preprocessing.MinMaxScaler()
     X = scaler.fit_transform(X)
-    labelencoder_Y = LabelEncoder()
-    y = labelencoder_Y.fit_transform(y)
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2,random_state=0)
-    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.25, random_state=0) 
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
 
     print(f"Connecting to {args.server}")
     with grpc.insecure_channel(args.server) as channel:
@@ -93,16 +91,16 @@ if __name__ == "__main__":
                 model.fit(X_train, y_train,
                           batch_size=32,
                           epochs=10,
-                          verbose=1,
-                          validation_data=(X_val, y_val)) 
-            
-                loss, f1_score = model.evaluate(X_test, y_test,
-                                              verbose=0,
-                                              batch_size=32)
+                          verbose=1) 
 
+                y_pred = model.predict(X_test)
+                y_pred = (y_pred > 0.5).astype("int32")
+
+                f1_score = metrics.f1_score(y_test, y_pred)
+            
                 results = ModelResults()
                 results.model_id = params.model_id
-                results.recall = f1_score[0]
+                results.recall = f1_score
 
                 print(f"Returning params")
                 _ = stub.ReturnModel(results)
