@@ -3,3 +3,4 @@ grpcio-tools
 #tensorflow
 sklearn
 pandas
+tensorflow-addons
