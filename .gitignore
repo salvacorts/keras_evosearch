@@ -2,3 +2,4 @@ client/protobuf
 server/protobuf
 **/bin
 .vscode
+logs

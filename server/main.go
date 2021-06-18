@@ -4,8 +4,11 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io"
 	"net"
 	"os"
+	"path/filepath"
+	"time"
 
 	"server/ea"
 	pb "server/protobuf/api"
@@ -49,18 +52,36 @@ func (s *ApiServer) ReturnModel(ctx context.Context, results *pb.ModelResults) (
 	return &pb.Empty{}, nil
 }
 
+func SetupLogger() {
+
+}
+
 func main() {
 	listen_addr := flag.String("listen", "0.0.0.0:10000", "Address to listen at")
 	log_level := flag.Int("verbosity", 4, "Verbosity level (Default info)")
 	flag.Parse()
 
+	// Setup logger
+	now := time.Now()
+	timespampFormat := "Jan__2_15_04_05"
+	fileName := fmt.Sprintf("logs/%s/generations.log", now.Format(timespampFormat))
+	_ = os.MkdirAll(filepath.Dir(fileName), os.ModePerm)
+	var file, err = os.OpenFile(fileName, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Panic("Failed to open log file")
+	}
+	defer file.Close()
+
+	mw := io.MultiWriter(os.Stdout, file)
+	log.SetOutput(mw)
+	log.SetFormatter(&log.JSONFormatter{})
 	log.SetLevel(log.Level(*log_level))
 
+	// Setup gRPC
 	lis, err := net.Listen("tcp", *listen_addr)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-
 	log.Info("Listening at " + *listen_addr)
 
 	var opts []grpc.ServerOption

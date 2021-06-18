@@ -1,14 +1,14 @@
 services:
     server:
         image: kerasevo/server:latest
-        command: -listen 0.0.0.0:10000 -verbosity 5
-        restart: always
+        command: -listen 0.0.0.0:10000 #-verbosity 5
         ports:
             - "10000:10000"
+        volumes:
+            - ./logs:/logs
     client:
         image: kerasevo/client:latest
         command: --server server:10000
-        restart: always
         #runtime: nvidia
         depends_on:
             - server
