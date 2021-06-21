@@ -28,7 +28,7 @@ def ParseArgs() -> argparse.Namespace:
 
     return parser.parse_args()
 
-def CreateModel(params: ModelParameters) -> Sequential:
+def CreateModel(params: ModelParameters, shape) -> Sequential:
     model = Sequential()
 
     activation_func = ActivationFunc.Name(params.activation_func).lower()
@@ -42,7 +42,7 @@ def CreateModel(params: ModelParameters) -> Sequential:
         if i == 0:
             model.add(Dense(units=layer.num_neurons,
                             activation=activation_func,
-                            input_shape=(12,)))
+                            input_shape=(shape[1],)))
         else:
             model.add(Dense(units=layer.num_neurons,
                             activation=activation_func))
@@ -85,7 +85,7 @@ if __name__ == "__main__":
                 params = stub.GetModelParams(Empty())
                 print(params)
 
-                model = CreateModel(params)
+                model = CreateModel(params, X.shape)
                 
                 # Train model
                 model.fit(X_train, y_train,
@@ -97,6 +97,7 @@ if __name__ == "__main__":
                 y_pred = (y_pred > 0.5).astype("int32")
 
                 f1_score = metrics.f1_score(y_test, y_pred)
+                print(f"F1: {f1_score}")
             
                 results = ModelResults()
                 results.model_id = params.model_id
